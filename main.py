@@ -1,19 +1,20 @@
 import argparse
-
+import re
+import sys
 import urllib.parse
-from typing import Optional, List, Generator, Iterable
-from urllib import request
+from pprint import PrettyPrinter
+from typing import Optional, Iterable, List
 
 import musicbrainzngs
 import requests as requests
+from tqdm import tqdm, gui
 
-DEBUG_LOGGING = True
 LYRICS_API_BASE_URL = "https://api.lyrics.ovh/v1/"
 
 musicbrainzngs.set_useragent("Artist Average Word Count", "0.1", "https://stefano.chiodino.uk")
 
 
-def song_lyrics(artist: str, song: str) -> Optional[str]:
+def find_song_lyrics(artist: str, song: str) -> Optional[str]:
     """ Find the lyrics for a song. """
     url = urllib.parse.urljoin(LYRICS_API_BASE_URL, f"{artist}/{song}")
     response = requests.get(url)
@@ -27,18 +28,15 @@ def lookup_artist_id(artist: str) -> Optional[str]:
 
     if artists:
         artist = artists[0]
-
-        if DEBUG_LOGGING:
-            print(f"Picking the most relevant '{artist['type']}' with id '{artist['id']}', called "
-                  f"'{artist['name']}', from '{artist['country']}', with confidence {artist['ext:score']}%")
-
         # TODO: return the list and prompt the user to pick the right one. Maybe only if score < 100.
+        # print(f"Picking the most relevant '{artist['type']}' with id '{artist['id']}', called "
+        #          f"'{artist['name']}', from '{artist['country']}', with confidence {artist['ext:score']}%")
         return artist["id"]
 
     return None
 
 
-def song_titles(artist_id: str, chunk_by: int = 100) -> Iterable[str]:
+def find_song_titles(artist_id: str, chunk_by: int = 100) -> Iterable[str]:
     """ All titles of songs by an artist. """
     current_offset = 0
     while True:
@@ -47,18 +45,36 @@ def song_titles(artist_id: str, chunk_by: int = 100) -> Iterable[str]:
         if not works:
             return
         songs = [x for x in works if x.get("type") == "Song"]
-        if DEBUG_LOGGING:
-            print(f"Finished fetching {len(songs)} songs, from {len(works)} works.")
         current_offset += chunk_by
-        yield [x.get("title") for x in songs]
+        for title in [x.get("title") for x in songs]:
+            yield title
 
         if len(works) < chunk_by:
             return
 
 
+def count_words(text: str) -> int:
+    """ Count the words in a text, skipping punctuation."""
+    # You have one problem. You choose to solve it with regex. You now have two problems.
+    words = re.findall(r'\w+', text)
+    return len(words)
+
+
 def average_lyrics_words(artist: str):
     artist_id = lookup_artist_id(artist)
-    pass
+    word_counts: List[int] = []
+    sample_size = 0
+    # TODO: Parallelise? May go against their fair usage policies.
+    with tqdm(find_song_titles(artist_id), unit=" counts", dynamic_ncols=True, file=sys.stderr) as progress_bar:
+        for song_title in progress_bar:
+            lyrics = find_song_lyrics(artist, song_title)
+            if lyrics:
+                word_counts += [count_words(lyrics)]
+                sample_size += 1
+                progress_bar.set_postfix({"Average word count": sum(word_counts) / sample_size})
+                progress_bar.update()
+
+    print(f"Average word count: {sum(word_counts) / sample_size}")
 
 
 def main() -> None:
