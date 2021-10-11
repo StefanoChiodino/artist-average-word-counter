@@ -2,12 +2,22 @@ import argparse
 
 import urllib.parse
 from typing import Optional, List, Generator, Iterable
+from urllib import request
 
 import musicbrainzngs
+import requests as requests
 
 DEBUG_LOGGING = True
+LYRICS_API_BASE_URL = "https://api.lyrics.ovh/v1/"
 
 musicbrainzngs.set_useragent("Artist Average Word Count", "0.1", "https://stefano.chiodino.uk")
+
+
+def song_lyrics(artist: str, song: str) -> Optional[str]:
+    """ Find the lyrics for a song. """
+    url = urllib.parse.urljoin(LYRICS_API_BASE_URL, f"{artist}/{song}")
+    response = requests.get(url)
+    return response.json().get("lyrics")
 
 
 def lookup_artist_id(artist: str) -> Optional[str]:
