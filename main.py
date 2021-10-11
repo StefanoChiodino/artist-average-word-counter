@@ -1,27 +1,26 @@
 import argparse
 
 import urllib.parse
-from typing import Optional, List
+from typing import Optional, List, Generator, Iterable
 
-import requests
+import musicbrainzngs
 
-MUSICBRAINZ_URL = "https://musicbrainz.org/ws/2/"
-MUSICBRAINZ_DEFAULT_PARAMETERS = {"fmt": "json"}
 DEBUG_LOGGING = True
+
+musicbrainzngs.set_useragent("Artist Average Word Count", "0.1", "https://stefano.chiodino.uk")
 
 
 def lookup_artist_id(artist: str) -> Optional[str]:
     """ Find an artist ID from the name. """
-    url = artist_lookup_url(artist)
-    response = requests.get(url)
-    artists = response.json().get("artists")
+    response = musicbrainzngs.search_artists(artist)
+    artists = response.get("artist-list")
 
     if artists:
         artist = artists[0]
 
         if DEBUG_LOGGING:
             print(f"Picking the most relevant '{artist['type']}' with id '{artist['id']}', called "
-                  f"'{artist['name']}', from '{artist['country']}', with confidence {artist['score']}%")
+                  f"'{artist['name']}', from '{artist['country']}', with confidence {artist['ext:score']}%")
 
         # TODO: return the list and prompt the user to pick the right one. Maybe only if score < 100.
         return artist["id"]
@@ -29,41 +28,22 @@ def lookup_artist_id(artist: str) -> Optional[str]:
     return None
 
 
-def releases(artist_id: str, chunk_by: int = 100) -> List[str]:
-    """ Find all releases by an artist. """
-    releases_ids: List[str] = []
+def song_titles(artist_id: str, chunk_by: int = 100) -> Iterable[str]:
+    """ All titles of songs by an artist. """
+    current_offset = 0
     while True:
-        url = release_search_url(artist_id, limit=chunk_by)
-        response = requests.get(url)
-        current_releases = response.json().get("releases")
-        if current_releases:
-            releases_ids += [x["id"] for x in current_releases]
-            if DEBUG_LOGGING:
-                print(f"Fetched {len(current_releases)} releases.")
+        response = musicbrainzngs.browse_works(artist=artist_id, limit=chunk_by, offset=current_offset)
+        works = response.get("work-list")
+        if not works:
+            return
+        songs = [x for x in works if x.get("type") == "Song"]
+        if DEBUG_LOGGING:
+            print(f"Finished fetching {len(songs)} songs, from {len(works)} works.")
+        current_offset += chunk_by
+        yield [x.get("title") for x in songs]
 
-        if not current_releases or len(current_releases) < chunk_by:
-            break
-
-    if DEBUG_LOGGING:
-        print(f"Finished fetching {len(releases_ids)} releases.")
-    return releases_ids
-
-
-def artist_lookup_url(artist: str) -> str:
-    url = urllib.parse.urljoin(MUSICBRAINZ_URL, f"artist")
-    query = urllib.parse.urlencode({"query": artist, **MUSICBRAINZ_DEFAULT_PARAMETERS})
-    return f"{url}?{query}"
-
-
-def release_search_url(artist_id: str, limit: int = None, offset: int = None) -> str:
-    url = urllib.parse.urljoin(MUSICBRAINZ_URL, f"release")
-    parameters = {"artist": artist_id}
-    if limit is not None:
-        parameters["limit"] = limit
-    if offset is not None:
-        parameters["offset"] = offset
-    query = urllib.parse.urlencode({**parameters, **MUSICBRAINZ_DEFAULT_PARAMETERS})
-    return f"{url}?{query}"
+        if len(works) < chunk_by:
+            return
 
 
 def average_lyrics_words(artist: str):
