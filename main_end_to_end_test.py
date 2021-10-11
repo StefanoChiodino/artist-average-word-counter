@@ -1,11 +1,13 @@
 import unittest
+from unittest import mock
+from unittest.mock import MagicMock
 
 from parameterized import parameterized
 
-from main import Api
+from main import Api, main
 
 
-class ArtistAverageWordCounterTest(unittest.TestCase):
+class ArtistAverageWordCounterEndToEndTests(unittest.TestCase):
     def setUp(self) -> None:
         self.api = Api()
 
@@ -15,7 +17,7 @@ class ArtistAverageWordCounterTest(unittest.TestCase):
         ("Lucio Battisti", "c0c0de23-d9c1-4776-97e0-0c2529402622", "Lucio Battisti"),
         ("battisti", "c0c0de23-d9c1-4776-97e0-0c2529402622", "Lucio Battisti"),
     ])
-    def test_lookup_artist_id(self, artist: str, expected_id: str, expected_name: str):
+    def test_lookup_artist(self, artist: str, expected_id: str, expected_name: str):
         artist, artist_id = self.api.lookup_artist(artist)
         self.assertEqual(artist, expected_name)
         self.assertEqual(artist_id, expected_id)
@@ -28,6 +30,11 @@ class ArtistAverageWordCounterTest(unittest.TestCase):
         lyrics = self.api.find_song_lyrics("Lucio Battisti", "Con il nastro rosa")
         self.assertGreater(len(list(lyrics)), 0)
         self.assertIn("chissà chi sei", lyrics)
+
+    def test_getting_average(self):
+        file_mock = MagicMock()
+        main(["Blind Faith"], file=file_mock)
+        file_mock.write.assert_called()
 
 
 if __name__ == '__main__':

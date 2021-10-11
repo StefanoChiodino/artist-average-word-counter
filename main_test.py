@@ -8,7 +8,13 @@ from parameterized import parameterized
 from main import count_words, calculate_lyrics_stats
 
 
-class ArtistAverageWordCounterTest(unittest.TestCase):
+class ArtistAverageWordCounterTests(unittest.TestCase):
+    @mock.patch("musicbrainzngs.search_artists")
+    def test_lookup_non_existent_artist(self, mock_search_artist: MagicMock):
+        mock_search_artist.return_value = {}
+        response = self.api.lookup_artist("")
+        self.assertIsNone(response)
+
     @parameterized.expand([
         ("Chissà, chissà chi sei", 4),
         ("Chissà , chissà chi sei", 4),

@@ -1,6 +1,8 @@
 import argparse
 import re
+import sys
 import urllib.parse
+from io import TextIOWrapper
 from typing import Optional, Iterable, List, Tuple
 
 import musicbrainzngs
@@ -56,14 +58,18 @@ def count_words(text: str) -> int:
     return len(words)
 
 
-def calculate_lyrics_stats(artist: str, api: Api, silent: bool = False) -> Tuple[List[int], int]:
+def calculate_lyrics_stats(artist: str, api: Api, silent: bool = False, file: TextIOWrapper = sys.stdout)\
+        -> Tuple[List[int], int]:
     """ Returns the word count of all lyrics, and total songs. """
-    artist_name, artist_id = api.lookup_artist(artist)
+    response = api.lookup_artist(artist)
+    if not response:
+        return [], 0
+    artist_name, artist_id = response
     word_counts: List[int] = []
     lyrics_found = 0
     search_count = 0
     # TODO: Parallelise? May go against API's fair usage policies.
-    with tqdm(api.find_song_titles(artist_id), unit=" counts", disable=silent) as progress_bar:
+    with tqdm(api.find_song_titles(artist_id), unit=" counts", disable=silent, file=file) as progress_bar:
         for song_title in progress_bar:
             lyrics = api.find_song_lyrics(artist_name, song_title)
             search_count += 1
@@ -78,17 +84,17 @@ def calculate_lyrics_stats(artist: str, api: Api, silent: bool = False) -> Tuple
     return word_counts, search_count
 
 
-def main() -> None:
+def main(args: List[str], file=sys.stdout) -> None:
     arg_parser: argparse.ArgumentParser = argparse.ArgumentParser()
     arg_parser.add_argument("artist")
 
-    args = arg_parser.parse_args()
+    args = arg_parser.parse_args(args)
 
-    word_counts, song_count = calculate_lyrics_stats(args.artist, Api())
+    word_counts, song_count = calculate_lyrics_stats(args.artist, Api(), file=file)
 
     print(f"Average word count: {sum(word_counts) / len(word_counts)}. Lyrics found {len(word_counts)}/{song_count},"
-          f" {len(word_counts) / song_count}%.")
+          f" {len(word_counts) / song_count}%.", file=file)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
