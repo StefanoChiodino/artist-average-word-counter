@@ -2,26 +2,30 @@ import unittest
 
 from parameterized import parameterized
 
-from main import lookup_artist_id, find_song_titles, find_song_lyrics
+from main import Api
 
 
 class ArtistAverageWordCounterTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.api = Api()
+
     @parameterized.expand([
-        ("Metallica", "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab"),
-        ("metallica", "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab"),
-        ("Lucio Battisti", "c0c0de23-d9c1-4776-97e0-0c2529402622"),
-        ("battisti", "c0c0de23-d9c1-4776-97e0-0c2529402622"),
+        ("Metallica", "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab", "Metallica"),
+        ("metallica", "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab", "Metallica"),
+        ("Lucio Battisti", "c0c0de23-d9c1-4776-97e0-0c2529402622", "Lucio Battisti"),
+        ("battisti", "c0c0de23-d9c1-4776-97e0-0c2529402622", "Lucio Battisti"),
     ])
-    def test_lookup_artist_id(self, artist: str, expected: str):
-        artist_id = lookup_artist_id(artist)
-        self.assertEqual(artist_id, expected)
+    def test_lookup_artist_id(self, artist: str, expected_id: str, expected_name: str):
+        artist, artist_id = self.api.lookup_artist(artist)
+        self.assertEqual(artist, expected_name)
+        self.assertEqual(artist_id, expected_id)
 
     def test_song_titles(self):
-        titles = find_song_titles("65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab")
+        titles = self.api.find_song_titles("65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab")
         self.assertGreater(len(list(titles)), 0)
 
     def test_song_lyrics(self):
-        lyrics = find_song_lyrics("Lucio Battisti", "Con il nastro rosa")
+        lyrics = self.api.find_song_lyrics("Lucio Battisti", "Con il nastro rosa")
         self.assertGreater(len(list(lyrics)), 0)
         self.assertIn("chissà chi sei", lyrics)
 

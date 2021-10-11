@@ -1,56 +1,52 @@
 import argparse
 import re
-import sys
 import urllib.parse
-from pprint import PrettyPrinter
-from typing import Optional, Iterable, List
+from typing import Optional, Iterable, List, Tuple
 
 import musicbrainzngs
 import requests as requests
-from tqdm import tqdm, gui
-
-LYRICS_API_BASE_URL = "https://api.lyrics.ovh/v1/"
-
-musicbrainzngs.set_useragent("Artist Average Word Count", "0.1", "https://stefano.chiodino.uk")
+from tqdm import tqdm
 
 
-def find_song_lyrics(artist: str, song: str) -> Optional[str]:
-    """ Find the lyrics for a song. """
-    url = urllib.parse.urljoin(LYRICS_API_BASE_URL, f"{artist}/{song}")
-    response = requests.get(url)
-    return response.json().get("lyrics")
+class Api(object):
+    LYRICS_API_BASE_URL = "https://api.lyrics.ovh/v1/"
+    musicbrainzngs.set_useragent("Artist Average Word Count", "0.1", "https://stefano.chiodino.uk")
 
+    def find_song_lyrics(self, artist: str, song: str) -> Optional[str]:
+        """ Find the lyrics for a song. """
+        url = urllib.parse.urljoin(self.LYRICS_API_BASE_URL, f"{artist}/{song}")
+        response = requests.get(url)
+        return response.json().get("lyrics")
 
-def lookup_artist_id(artist: str) -> Optional[str]:
-    """ Find an artist ID from the name. """
-    response = musicbrainzngs.search_artists(artist)
-    artists = response.get("artist-list")
+    def lookup_artist(self, artist: str) -> Optional[Tuple[str, str]]:
+        """ Find an artist name and ID from a query. """
+        response = musicbrainzngs.search_artists(artist)
+        artists = response.get("artist-list")
 
-    if artists:
-        artist = artists[0]
-        # TODO: return the list and prompt the user to pick the right one. Maybe only if score < 100.
-        # print(f"Picking the most relevant '{artist['type']}' with id '{artist['id']}', called "
-        #          f"'{artist['name']}', from '{artist['country']}', with confidence {artist['ext:score']}%")
-        return artist["id"]
+        if artists:
+            artist = artists[0]
+            # TODO: return the list and prompt the user to pick the right one. Maybe only if score < 100.
+            # print(f"Picking the most relevant '{artist['type']}' with id '{artist['id']}', called "
+            #          f"'{artist['name']}', from '{artist['country']}', with confidence {artist['ext:score']}%")
+            return artist["name"], artist["id"]
 
-    return None
+        return None
 
+    def find_song_titles(self, artist_id: str, chunk_by: int = 100) -> Iterable[str]:
+        """ All titles of songs by an artist. """
+        current_offset = 0
+        while True:
+            response = musicbrainzngs.browse_works(artist=artist_id, limit=chunk_by, offset=current_offset)
+            works = response.get("work-list")
+            if not works:
+                return
+            songs = [x for x in works if x.get("type") == "Song"]
+            current_offset += chunk_by
+            for title in [x.get("title") for x in songs]:
+                yield title
 
-def find_song_titles(artist_id: str, chunk_by: int = 100) -> Iterable[str]:
-    """ All titles of songs by an artist. """
-    current_offset = 0
-    while True:
-        response = musicbrainzngs.browse_works(artist=artist_id, limit=chunk_by, offset=current_offset)
-        works = response.get("work-list")
-        if not works:
-            return
-        songs = [x for x in works if x.get("type") == "Song"]
-        current_offset += chunk_by
-        for title in [x.get("title") for x in songs]:
-            yield title
-
-        if len(works) < chunk_by:
-            return
+            if len(works) < chunk_by:
+                return
 
 
 def count_words(text: str) -> int:
@@ -60,21 +56,26 @@ def count_words(text: str) -> int:
     return len(words)
 
 
-def average_lyrics_words(artist: str):
-    artist_id = lookup_artist_id(artist)
+def calculate_lyrics_stats(artist: str, api: Api, silent: bool = False) -> Tuple[List[int], int]:
+    """ Returns the word count of all lyrics, and total songs. """
+    artist_name, artist_id = api.lookup_artist(artist)
     word_counts: List[int] = []
-    sample_size = 0
-    # TODO: Parallelise? May go against their fair usage policies.
-    with tqdm(find_song_titles(artist_id), unit=" counts", dynamic_ncols=True, file=sys.stderr) as progress_bar:
+    lyrics_found = 0
+    search_count = 0
+    # TODO: Parallelise? May go against API's fair usage policies.
+    with tqdm(api.find_song_titles(artist_id), unit=" counts", disable=silent) as progress_bar:
         for song_title in progress_bar:
-            lyrics = find_song_lyrics(artist, song_title)
+            lyrics = api.find_song_lyrics(artist_name, song_title)
+            search_count += 1
             if lyrics:
                 word_counts += [count_words(lyrics)]
-                sample_size += 1
-                progress_bar.set_postfix({"Average word count": sum(word_counts) / sample_size})
-                progress_bar.update()
+                lyrics_found += 1
+            progress_bar.set_postfix(
+                {"Average word count": sum(word_counts) / lyrics_found if lyrics_found else 0,
+                 "Lyrics found %": len(word_counts) / search_count})
+            progress_bar.update()
 
-    print(f"Average word count: {sum(word_counts) / sample_size}")
+    return word_counts, search_count
 
 
 def main() -> None:
@@ -83,7 +84,10 @@ def main() -> None:
 
     args = arg_parser.parse_args()
 
-    average_lyrics_words(args.artist)
+    word_counts, song_count = calculate_lyrics_stats(args.artist, Api())
+
+    print(f"Average word count: {sum(word_counts) / len(word_counts)}. Lyrics found {len(word_counts)}/{song_count},"
+          f" {len(word_counts) / song_count}%.")
 
 
 if __name__ == "__main__":
