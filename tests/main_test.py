@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 from parameterized import parameterized
 
-from main import count_words, calculate_lyrics_stats
+from src.main import count_words, calculate_lyrics_stats
 
 
 class ArtistAverageWordCounterTests(unittest.TestCase):

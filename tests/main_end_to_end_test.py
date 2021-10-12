@@ -1,10 +1,9 @@
 import unittest
-from unittest import mock
 from unittest.mock import MagicMock
 
 from parameterized import parameterized
 
-from main import Api, main
+from src.main import Api, main
 
 
 class ArtistAverageWordCounterEndToEndTests(unittest.TestCase):
