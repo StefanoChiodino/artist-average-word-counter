@@ -4,6 +4,7 @@ import argparse
 import re
 import sys
 import urllib.parse
+from statistics import mean
 from typing import Optional, Iterable, List, Tuple, TextIO
 
 import musicbrainzngs
@@ -45,8 +46,8 @@ class Api(object):
                 return
             songs = [x for x in works if x.get("type") == "Song"]
             current_offset += chunk_by
-            for title in [x.get("title") for x in songs]:
-                yield title
+            for song in songs:
+                yield song.get("title")
 
             if len(works) < chunk_by:
                 return
@@ -61,13 +62,12 @@ def count_words(text: str) -> int:
 
 def calculate_lyrics_stats(artist: str, api: Api, silent: bool = False, file: TextIO = sys.stdout)\
         -> Tuple[List[int], int]:
-    """ Returns the word count of all lyrics, and total songs. """
+    """ Returns the word count of all lyrics found, and total number of songs. """
     response = api.lookup_artist(artist)
     if not response:
         return [], 0
     artist_name, artist_id = response
     word_counts: List[int] = []
-    lyrics_found = 0
     search_count = 0
     # TODO: Parallelise? May go against API's fair usage policies.
     with tqdm(api.find_song_titles(artist_id), unit=" counts", disable=silent, file=file) as progress_bar:
@@ -76,9 +76,8 @@ def calculate_lyrics_stats(artist: str, api: Api, silent: bool = False, file: Te
             search_count += 1
             if lyrics:
                 word_counts += [count_words(lyrics)]
-                lyrics_found += 1
             progress_bar.set_postfix(
-                {"Average word count": sum(word_counts) / lyrics_found if lyrics_found else 0,
+                {"Average word count": mean(word_counts) if word_counts else 0,
                  "Lyrics found %": len(word_counts) / search_count})
             progress_bar.update()
 
@@ -86,17 +85,16 @@ def calculate_lyrics_stats(artist: str, api: Api, silent: bool = False, file: Te
 
 
 def run(args: List[str], file=sys.stdout, api: Api = Api()) -> None:
+    """ Calculates and prints the average word count for an artist lyrics. """
     arg_parser: argparse.ArgumentParser = argparse.ArgumentParser()
     arg_parser.add_argument("artist", nargs="+")
-
     args = arg_parser.parse_args(args)
 
     word_counts, song_count = calculate_lyrics_stats(args.artist, api, file=file)
 
-    average = sum(word_counts) / len(word_counts) if song_count > 0 else 0
     lyrics_found_percent = len(word_counts) / song_count if song_count > 0 else 0
-    print(f"Average word count: {average}. Lyrics found {len(word_counts)}/{song_count},"
-          f" {lyrics_found_percent}%.", file=file)
+    print(f"Average word count: {mean(word_counts) if word_counts else 0}. "
+          f"Lyrics found {len(word_counts)}/{song_count}, {lyrics_found_percent}%.", file=file)
 
 
 def main() -> None:

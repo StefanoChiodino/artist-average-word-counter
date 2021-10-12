@@ -3,7 +3,6 @@ requires = [
     "setuptools>=42",
     "wheel",
     "musicbrainzngs == 0.7.1",
-    "parameterized == 0.8.1",
     "requests == 2.26.0",
     "tqdm ~= 4.62.3",
 ]

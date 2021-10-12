@@ -17,9 +17,9 @@ class ArtistAverageWordCounterEndToEndTests(unittest.TestCase):
         ("battisti", "c0c0de23-d9c1-4776-97e0-0c2529402622", "Lucio Battisti"),
     ])
     def test_lookup_artist(self, artist: str, expected_id: str, expected_name: str):
-        artist, artist_id = self.api.lookup_artist(artist)
-        self.assertEqual(artist, expected_name)
-        self.assertEqual(artist_id, expected_id)
+        actual_name, actual_id = self.api.lookup_artist(artist)
+        self.assertEqual(actual_id, expected_id)
+        self.assertEqual(actual_name, expected_name)
 
     def test_song_titles(self):
         titles = self.api.find_song_titles("65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab")
