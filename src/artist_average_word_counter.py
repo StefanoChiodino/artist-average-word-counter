@@ -4,8 +4,7 @@ import argparse
 import re
 import sys
 import urllib.parse
-from io import TextIOWrapper
-from typing import Optional, Iterable, List, Tuple
+from typing import Optional, Iterable, List, Tuple, TextIO
 
 import musicbrainzngs
 import requests as requests
@@ -60,7 +59,7 @@ def count_words(text: str) -> int:
     return len(words)
 
 
-def calculate_lyrics_stats(artist: str, api: Api, silent: bool = False, file: TextIOWrapper = sys.stdout)\
+def calculate_lyrics_stats(artist: str, api: Api, silent: bool = False, file: TextIO = sys.stdout)\
         -> Tuple[List[int], int]:
     """ Returns the word count of all lyrics, and total songs. """
     response = api.lookup_artist(artist)
@@ -86,9 +85,9 @@ def calculate_lyrics_stats(artist: str, api: Api, silent: bool = False, file: Te
     return word_counts, search_count
 
 
-def main(args: List[str], file=sys.stdout) -> None:
+def run(args: List[str], file=sys.stdout) -> None:
     arg_parser: argparse.ArgumentParser = argparse.ArgumentParser()
-    arg_parser.add_argument("artist")
+    arg_parser.add_argument("artist", nargs="+")
 
     args = arg_parser.parse_args(args)
 
@@ -98,5 +97,9 @@ def main(args: List[str], file=sys.stdout) -> None:
           f" {len(word_counts) / song_count}%.", file=file)
 
 
+def main() -> None:
+    run(sys.argv[1:])
+
+
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

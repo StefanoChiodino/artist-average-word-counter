@@ -5,10 +5,13 @@ from unittest.mock import MagicMock
 
 from parameterized import parameterized
 
-from src.main import count_words, calculate_lyrics_stats
+from src.artist_average_word_counter import count_words, calculate_lyrics_stats, Api
 
 
 class ArtistAverageWordCounterTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.api = Api()
+
     @mock.patch("musicbrainzngs.search_artists")
     def test_lookup_non_existent_artist(self, mock_search_artist: MagicMock):
         mock_search_artist.return_value = {}

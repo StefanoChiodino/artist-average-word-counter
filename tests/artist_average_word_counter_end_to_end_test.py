@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 from parameterized import parameterized
 
-from src.main import Api, main
+from src.artist_average_word_counter import Api, run
 
 
 class ArtistAverageWordCounterEndToEndTests(unittest.TestCase):
@@ -32,7 +32,7 @@ class ArtistAverageWordCounterEndToEndTests(unittest.TestCase):
 
     def test_getting_average(self):
         file_mock = MagicMock()
-        main(["Blind Faith"], file=file_mock)
+        run(["Blind Faith"], file=file_mock)
         file_mock.write.assert_called()
 
 
