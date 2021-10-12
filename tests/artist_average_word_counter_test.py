@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 from parameterized import parameterized
 
-from src.artist_average_word_counter import count_words, calculate_lyrics_stats, Api
+from src.artist_average_word_counter import count_words, calculate_lyrics_stats, Api, run
 
 
 class ArtistAverageWordCounterTests(unittest.TestCase):
@@ -47,6 +47,14 @@ class ArtistAverageWordCounterTests(unittest.TestCase):
 
         self.assertEqual(word_counts, expected_word_counts)
         self.assertEqual(song_count, len(song_words))
+
+    def test_getting_average_for_non_existing_artist(self):
+        mock_api = MagicMock()
+        mock_api.lookup_artist.return_value = ("artist", "artist_id")
+        mock_api.find_song_lyrics.side_effect = []
+        mock_api.find_song_titles.return_value = []
+        file_mock = MagicMock()
+        run(["Blind Faith"], file=file_mock, api=mock_api)
 
 
 if __name__ == '__main__':

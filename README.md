@@ -5,7 +5,7 @@ This should be a CLI application that is usable from the command line.
 
 # Install
 
-You can install this locally with `pip3 --editable install .`
+You can install this locally with `pip3 install --editable .`
 
 You can install from github with `pip3 install git+https://github.com/StefanoChiodino/artist-average-word-counter`
 

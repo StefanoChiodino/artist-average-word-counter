@@ -85,16 +85,18 @@ def calculate_lyrics_stats(artist: str, api: Api, silent: bool = False, file: Te
     return word_counts, search_count
 
 
-def run(args: List[str], file=sys.stdout) -> None:
+def run(args: List[str], file=sys.stdout, api: Api = Api()) -> None:
     arg_parser: argparse.ArgumentParser = argparse.ArgumentParser()
     arg_parser.add_argument("artist", nargs="+")
 
     args = arg_parser.parse_args(args)
 
-    word_counts, song_count = calculate_lyrics_stats(args.artist, Api(), file=file)
+    word_counts, song_count = calculate_lyrics_stats(args.artist, api, file=file)
 
-    print(f"Average word count: {sum(word_counts) / len(word_counts)}. Lyrics found {len(word_counts)}/{song_count},"
-          f" {len(word_counts) / song_count}%.", file=file)
+    average = sum(word_counts) / len(word_counts) if song_count > 0 else 0
+    lyrics_found_percent = len(word_counts) / song_count if song_count > 0 else 0
+    print(f"Average word count: {average}. Lyrics found {len(word_counts)}/{song_count},"
+          f" {lyrics_found_percent}%.", file=file)
 
 
 def main() -> None:
