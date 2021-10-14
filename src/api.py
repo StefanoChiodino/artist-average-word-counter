@@ -27,7 +27,7 @@ class Api(object):
 
         return None
 
-    def lookup_artist_interactive(self, artist_query: str, input_pipe: Callable[[], str] = input,
+    def lookup_artist_interactive(self, artist_query: str, interactive: bool, input_pipe: Callable[[], str] = input,
                                   output_pipe: TextIO = sys.stdout) -> Optional[Tuple[str, str]]:
         """ Find an artist name and ID from a query, prompting the user to pick one if necessary. """
         response = musicbrainzngs.search_artists(artist_query, limit=10)
@@ -38,7 +38,7 @@ class Api(object):
             return None
 
         # I read this score comes straight from lucene, so it's a good use case for us.
-        if artists[0].get("ext:score") == "100":
+        if not interactive and artists[0].get("ext:score") == "100":
             print(f"{artists[0]['name']}? We have found the perfect match!", file=output_pipe)
             return artists[0]["name"], artists[0]["id"]
 

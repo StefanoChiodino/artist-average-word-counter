@@ -7,13 +7,15 @@ This should be a CLI application that is usable from the command line.
 
 Python 3.6+
 
-# Run
+# Set up
 
 Optionally, create a virtual environment with `python3 -m venv venv` and activate it with `source venv/bin/activate`.
 
 Install dependencies with `pip3 install -r requirements.txt`
 
-Run `python3 src/artist_average_word_counter.py "artist name"`.
+# Run
+
+Run `python3 src/artist_average_word_counter.py "artist name"`. You can add the `-i`/`--interactive` flag to force interactive mode to pick an artist instead of best match.
 
 Get help on the CLI with `python3 src/artist_average_word_counter.py --help`.
 
