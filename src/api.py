@@ -1,6 +1,6 @@
 import sys
 import urllib.parse
-from typing import Optional, Tuple, Iterable
+from typing import Optional, Tuple, Iterable, Callable, TextIO, Any
 
 import musicbrainzngs
 import requests as requests
@@ -27,13 +27,14 @@ class Api(object):
 
         return None
 
-    def lookup_artist_interactive(self, artist_query: str, input_pipe=input, output_pipe=sys.stdout) -> Optional[Tuple[str, str]]:
+    def lookup_artist_interactive(self, artist_query: str, input_pipe: Callable[[], str] = input,
+                                  output_pipe: TextIO = sys.stdout) -> Optional[Tuple[str, str]]:
         """ Find an artist name and ID from a query, prompting the user to pick one if necessary. """
         response = musicbrainzngs.search_artists(artist_query, limit=10)
         artists = response.get("artist-list")
 
         if not artists:
-            print(f"Sorry, we couldn't find any artist with '{artist_query}'!")
+            print(f"Sorry, we couldn't find any artist with '{artist_query}'!", file=output_pipe)
             return None
 
         # I read this score comes straight from lucene, so it's a good use case for us.

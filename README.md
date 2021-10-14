@@ -13,7 +13,7 @@ Optionally, create a virtual environment with `python3 -m venv venv` and activat
 
 Install dependencies with `pip3 install -r requirements.txt`
 
-Run `python3 src/artist_average_word_counter.py artist name`.
+Run `python3 src/artist_average_word_counter.py "artist name"`.
 
 Get help on the CLI with `python3 src/artist_average_word_counter.py --help`.
 
