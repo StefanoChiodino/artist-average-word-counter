@@ -5,20 +5,12 @@ from unittest.mock import MagicMock
 
 from parameterized import parameterized
 
-from src.artist_average_word_counter import count_words, calculate_lyrics_stats, Api, run
+from src.artist_average_word_counter import count_words, calculate_lyrics_stats, run
 
 
 class ArtistAverageWordCounterTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.api = Api()
-
-    @mock.patch("musicbrainzngs.search_artists")
-    def test_lookup_non_existent_artist(self, mock_search_artist: MagicMock):
-        mock_search_artist.return_value = {}
-        response = self.api.lookup_artist("")
-        self.assertIsNone(response)
-
     @parameterized.expand([
+        # I'm trying italian lyrics to make sure it works with more than just english characters.
         ("Chissà, chissà chi sei", 4),
         ("Chissà , chissà chi sei", 4),
         ("a b c", 3),

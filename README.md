@@ -21,6 +21,6 @@ Get help on the CLI with `python3 src/artist_average_word_counter.py --help`.
 
 Install dev dependencies with `pip3 install -r dev-requirements.txt`
 
-Run `python3 -m unittest tests/*`.
+Run `python3 -m unittest tests/*test.py`.
 
 The tests in `artist_average_word_counter_end_to_end_test.py` uses live API.

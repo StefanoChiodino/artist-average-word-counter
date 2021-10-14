@@ -3,54 +3,12 @@
 import argparse
 import re
 import sys
-import urllib.parse
 from statistics import mean
-from typing import Optional, Iterable, List, Tuple, TextIO
+from typing import List, Tuple, TextIO
 
-import musicbrainzngs
-import requests as requests
 from tqdm import tqdm
 
-
-class Api(object):
-    LYRICS_API_BASE_URL = "https://api.lyrics.ovh/v1/"
-    musicbrainzngs.set_useragent("Artist Average Word Count", "0.1", "https://stefano.chiodino.uk")
-
-    def find_song_lyrics(self, artist: str, song: str) -> Optional[str]:
-        """ Find the lyrics for a song. """
-        url = urllib.parse.urljoin(self.LYRICS_API_BASE_URL, f"{artist}/{song}")
-        response = requests.get(url)
-        return response.json().get("lyrics")
-
-    def lookup_artist(self, artist: str) -> Optional[Tuple[str, str]]:
-        """ Find an artist name and ID from a query. """
-        response = musicbrainzngs.search_artists(artist)
-        artists = response.get("artist-list")
-
-        if artists:
-            artist = artists[0]
-            # TODO: return the list and prompt the user to pick the right one. Maybe only if score < 100.
-            # print(f"Picking the most relevant '{artist['type']}' with id '{artist['id']}', called "
-            #          f"'{artist['name']}', from '{artist['country']}', with confidence {artist['ext:score']}%")
-            return artist["name"], artist["id"]
-
-        return None
-
-    def find_song_titles(self, artist_id: str, chunk_by: int = 100) -> Iterable[str]:
-        """ All titles of songs by an artist. """
-        current_offset = 0
-        while True:
-            response = musicbrainzngs.browse_works(artist=artist_id, limit=chunk_by, offset=current_offset)
-            works = response.get("work-list")
-            if not works:
-                return
-            songs = [x for x in works if x.get("type") == "Song"]
-            current_offset += chunk_by
-            for song in songs:
-                yield song.get("title")
-
-            if len(works) < chunk_by:
-                return
+from src.api import Api
 
 
 def count_words(text: str) -> int:
@@ -94,7 +52,7 @@ def run(args: List[str], file=sys.stdout, api: Api = Api()) -> None:
 
     lyrics_found_percent = len(word_counts) / song_count if song_count > 0 else 0
     print(f"Average word count: {mean(word_counts) if word_counts else 0}. "
-          f"Lyrics found {len(word_counts)}/{song_count}, {lyrics_found_percent}%.", file=file)
+          f"Lyrics found {len(word_counts)}/{song_count},` {lyrics_found_percent}%.", file=file)
 
 
 def main() -> None:
