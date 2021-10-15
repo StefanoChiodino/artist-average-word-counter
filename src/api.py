@@ -27,7 +27,8 @@ class Api(object):
 
         return None
 
-    def lookup_artist_interactive(self, artist_query: str, interactive: bool, input_pipe: Callable[[], str] = input,
+    def lookup_artist_interactive(self, artist_query: str, interactive: bool = False,
+                                  input_pipe: Callable[[], str] = input,
                                   output_pipe: TextIO = sys.stdout) -> Optional[Tuple[str, str]]:
         """ Find an artist name and ID from a query, prompting the user to pick one if necessary. """
         response = musicbrainzngs.search_artists(artist_query, limit=10)

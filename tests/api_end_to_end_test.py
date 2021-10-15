@@ -11,7 +11,6 @@ class ApiEndToEndTests(unittest.TestCase):
 
     @parameterized.expand([
         ("Metallica", "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab", "Metallica"),
-        ("metallica", "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab", "Metallica"),
         ("Lucio Battisti", "c0c0de23-d9c1-4776-97e0-0c2529402622", "Lucio Battisti"),
         ("battisti", "c0c0de23-d9c1-4776-97e0-0c2529402622", "Lucio Battisti"),
     ])
@@ -21,7 +20,8 @@ class ApiEndToEndTests(unittest.TestCase):
         self.assertEqual(actual_name, expected_name)
 
     def test_song_titles(self):
-        titles = self.api.find_song_titles("65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab")
+        # Shout out to Blind Faith for making a single album and saving me testing time.
+        titles = self.api.find_song_titles("c0c0de23-d9c1-4776-97e0-0c2529402622")
         self.assertGreater(len(list(titles)), 0)
 
     def test_song_lyrics(self):

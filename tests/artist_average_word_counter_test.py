@@ -41,11 +41,12 @@ class ArtistAverageWordCounterTests(unittest.TestCase):
 
     def test_getting_average_for_non_existing_artist(self):
         mock_api = MagicMock()
-        mock_api.lookup_artist_interactive.return_value = ("artist", "artist_id")
-        mock_api.find_song_lyrics.side_effect = []
-        mock_api.find_song_titles.return_value = []
+        mock_api.lookup_artist_interactive.return_value = None
         file_mock = MagicMock()
-        run(["Blind Faith"], file=file_mock, api=mock_api)
+
+        run(["Blind Faith"], mock_api, file=file_mock)
+
+        self.assertIn("Average word count: 0", str(file_mock.write.call_args_list))
 
 
 if __name__ == '__main__':
