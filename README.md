@@ -15,7 +15,7 @@ Install dependencies with `pip3 install -r requirements.txt`
 
 # Run
 
-Run `python3 src/artist_average_word_counter.py "artist name"`. You can add the `-i`/`--interactive` flag to force interactive mode to pick an artist instead of best match.
+Run `python3 src/artist_average_word_counter.py "metallica"`. You can add the `-i`/`--interactive` flag to force interactive mode to pick an artist instead of best match.
 
 Get help on the CLI with `python3 src/artist_average_word_counter.py --help`.
 
