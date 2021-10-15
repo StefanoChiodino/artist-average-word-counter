@@ -2,7 +2,7 @@ import unittest
 
 from parameterized import parameterized
 
-from src.api import Api
+from src.artist_average_word_counter import Api
 
 
 class ApiEndToEndTests(unittest.TestCase):

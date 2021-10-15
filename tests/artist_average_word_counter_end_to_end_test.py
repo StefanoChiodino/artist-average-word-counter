@@ -14,6 +14,5 @@ class ArtistAverageWordCounterEndToEndTests(unittest.TestCase):
         self.assertIn("Average word count", str(file_mock.write.call_args_list))
 
 
-
 if __name__ == '__main__':
     unittest.main()
